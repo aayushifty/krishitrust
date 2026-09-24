@@ -1,0 +1,2554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KrishiTrust — National Pitch Deck (IdeaX 2026)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Robust Three.js loading: Local first with CDN fallback -->
+  <script src="three.min.js"></script>
+  <script src="/three.min.js"></script>
+  <script>
+    if (!window.THREE) {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+    }
+  </script>
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       RESET & THEME VARIABLES
+    ═══════════════════════════════════════════════════════════════ */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    :root {
+      --bg: #020617;
+      --accent-glow: rgba(16, 185, 129, 0.22);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.5);
+      --gold: #f59e0b;
+      --gold-glow: rgba(245, 158, 11, 0.5);
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.5);
+      --rose: #f43f5e;
+      --rose-glow: rgba(244, 63, 94, 0.5);
+      --purple: #8b5cf6;
+      --purple-glow: rgba(139, 92, 246, 0.5);
+      --card-bg: rgba(9, 16, 30, 0.92);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--text);
+      transition: background 0.8s ease;
+    }
+
+    /* Ambient Dynamic Backdrop Glow */
+    #ambient-backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background: radial-gradient(circle at 75% 45%, var(--accent-glow) 0%, transparent 65%);
+      transition: background 0.8s ease;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       3D WEBGL STAGE (FULLSCREEN)
+    ═══════════════════════════════════════════════════════════════ */
+    #stage-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      cursor: grab;
+    }
+    #stage-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       3D WORLD-TRACKING LABELS OVERLAY (HTML BEACONS)
+    ═══════════════════════════════════════════════════════════════ */
+    #world-labels {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      overflow: hidden;
+    }
+    .world-beacon {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px;
+      border-radius: 99px;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      background: rgba(9, 16, 30, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+      opacity: 0;
+      transition: opacity 0.35s ease, transform 0.25s ease;
+      will-change: transform, opacity;
+    }
+    .world-beacon.visible {
+      opacity: 1;
+    }
+    .beacon-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      box-shadow: 0 0 10px currentColor;
+      animation: beaconPulse 1.8s infinite;
+    }
+    @keyframes beaconPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.5; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       TOP HUD
+    ═══════════════════════════════════════════════════════════════ */
+    #hud {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      background: linear-gradient(180deg, rgba(3, 7, 18, 0.94) 0%, rgba(3, 7, 18, 0) 100%);
+      pointer-events: none;
+    }
+    .hud-interactive {
+      pointer-events: all;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 14px var(--emerald);
+      animation: pulse-dot 1.8s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.4; }
+    }
+    .badge-idea {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 99px;
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .btn-hud {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 5px 11px;
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .btn-hud:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .btn-hud-primary {
+      background: var(--emerald);
+      color: #030712;
+      border-color: var(--emerald);
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.35);
+    }
+    #timer-box {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--emerald);
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    /* Slide Navigation Dots */
+    .dots-strip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 5px 10px;
+      border-radius: 99px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .dot.active {
+      width: 18px;
+      border-radius: 99px;
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+    }
+
+    /* Scene Status Pill */
+    #scene-status-pill {
+      position: fixed;
+      top: 68px;
+      right: 28px;
+      z-index: 80;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(9, 16, 30, 0.8);
+      padding: 5px 12px;
+      border-radius: 99px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(16px);
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--emerald);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      transition: color 0.4s ease;
+    }
+    .scene-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       SLIDE CONTENT (LOWKEY MINIMAL PITCH CARD ON LEFT)
+    ═══════════════════════════════════════════════════════════════ */
+    #pitch-container {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      padding: 60px 36px 36px 36px;
+    }
+    .pitch-card {
+      width: min(440px, 34vw);
+      max-height: 78vh;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      backdrop-filter: blur(36px);
+      -webkit-backdrop-filter: blur(36px);
+      box-shadow: 
+        0 25px 80px rgba(0, 0, 0, 0.85),
+        0 0 50px rgba(16, 185, 129, 0.06);
+      padding: 22px 24px;
+      pointer-events: all;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-y: auto;
+      transform-origin: left center;
+      will-change: transform, opacity;
+      transition: border-color 0.4s ease;
+    }
+    .pitch-card.active {
+      display: flex;
+    }
+
+    .pitch-card::-webkit-scrollbar {
+      width: 4px;
+    }
+    .pitch-card::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 99px;
+    }
+
+    .card-in {
+      display: flex !important;
+      animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .card-out {
+      display: flex !important;
+      animation: cardOut 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    @keyframes cardIn {
+      0% { transform: translateX(-40px) rotateY(12deg) scale(0.96); opacity: 0; filter: blur(6px); }
+      100% { transform: translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0); }
+    }
+    @keyframes cardOut {
+      0% { transform: translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0); }
+      100% { transform: translateX(-40px) rotateY(-12deg) scale(0.96); opacity: 0; filter: blur(6px); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       TYPOGRAPHY & SYMBOLIC ATOMS (LOWKEY VIBES, ZERO ESSAYS)
+    ═══════════════════════════════════════════════════════════════ */
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--emerald);
+      margin-bottom: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 3px 8px;
+      border-radius: 99px;
+      width: fit-content;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .headline {
+      font-size: 21px;
+      font-weight: 900;
+      line-height: 1.22;
+      letter-spacing: -0.03em;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+    .headline .glow-word { color: var(--emerald); text-shadow: 0 0 20px var(--emerald-glow); }
+    .headline .gold-word { color: var(--gold); text-shadow: 0 0 20px var(--gold-glow); }
+    .headline .rose-word { color: var(--rose); text-shadow: 0 0 20px var(--rose-glow); }
+    .headline .cyan-word { color: var(--cyan); text-shadow: 0 0 20px var(--cyan-glow); }
+    .headline .purple-word { color: var(--purple); text-shadow: 0 0 20px var(--purple-glow); }
+
+    /* Lowkey Symbolic Telemetry Strip */
+    .symbol-strip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .symbol-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      padding: 4px 9px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+    }
+    .symbol-pill.emerald {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #34d399;
+    }
+    .symbol-pill.cyan {
+      background: rgba(6, 182, 212, 0.12);
+      border-color: rgba(6, 182, 212, 0.3);
+      color: #67e8f9;
+    }
+    .symbol-pill.gold {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+    }
+    .symbol-pill.rose {
+      background: rgba(244, 63, 94, 0.12);
+      border-color: rgba(244, 63, 94, 0.3);
+      color: #fda4af;
+    }
+    .symbol-pill.purple {
+      background: rgba(139, 92, 246, 0.12);
+      border-color: rgba(139, 92, 246, 0.3);
+      color: #c4b5fd;
+    }
+
+    /* Interactive 3D Quick-Action Bar on Card */
+    .lens-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 4px 9px;
+      border-radius: 99px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      width: fit-content;
+      font-size: 10.5px;
+      color: #94a3b8;
+    }
+    .lens-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-size: 10.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 99px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .lens-btn:hover {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--emerald);
+      color: #34d399;
+    }
+
+    /* KPI Highlights Grid */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .kpi-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: all 0.25s;
+    }
+    .kpi-box:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.16);
+      transform: translateY(-2px);
+    }
+    .kpi-number {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .kpi-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    /* Symbolic Status Rows */
+    .symbolic-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .symbolic-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 11px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 11px;
+      color: #cbd5e1;
+    }
+
+    /* Action Buttons Row */
+    .action-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .btn-action {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 8px 15px;
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .btn-action:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+    .btn-action.primary {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-color: #34d399;
+      color: #030712;
+      box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);
+    }
+    .btn-action.gold {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      border-color: #fbbf24;
+      color: #030712;
+      box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35);
+    }
+
+    /* Navigation Arrows */
+    .nav-arrow-btn {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 90;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(9, 16, 30, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition: all 0.2s;
+    }
+    .nav-arrow-btn:hover {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--emerald);
+      transform: translateY(-50%) scale(1.08);
+    }
+    .nav-arrow-btn:disabled {
+      opacity: 0.2;
+      pointer-events: none;
+    }
+    #arr-prev { left: 16px; }
+    #arr-next { right: 16px; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       INTERACTIVE 3D SIMULATION COCKPIT (BOTTOM RIGHT)
+    ═══════════════════════════════════════════════════════════════ */
+    #sim-cockpit {
+      position: fixed;
+      bottom: 20px;
+      right: 28px;
+      z-index: 90;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(9, 16, 30, 0.88);
+      padding: 5px 12px;
+      border-radius: 99px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+    }
+    .sim-cockpit-label {
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--emerald);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-right: 3px;
+    }
+    .cockpit-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 99px;
+      padding: 4px 11px;
+      color: #e2e8f0;
+      font-size: 10.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .cockpit-btn:hover {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--emerald);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .cockpit-btn.active {
+      background: var(--emerald);
+      color: #030712;
+      border-color: var(--emerald);
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.5);
+    }
+    .cockpit-btn.danger.active {
+      background: var(--rose);
+      color: #fff;
+      border-color: var(--rose);
+      box-shadow: 0 0 14px rgba(244, 63, 94, 0.6);
+    }
+
+    /* Audience Reaction Dock (Bottom Left) */
+    #reaction-dock {
+      position: fixed;
+      bottom: 20px;
+      left: 36px;
+      z-index: 90;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(9, 16, 30, 0.85);
+      padding: 5px 11px;
+      border-radius: 99px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+    .reaction-btn {
+      background: transparent;
+      border: none;
+      color: #e2e8f0;
+      font-size: 10.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 7px;
+      border-radius: 99px;
+      transition: all 0.2s;
+    }
+    .reaction-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(1.1);
+    }
+    .cnt-num {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--emerald);
+      font-size: 10px;
+    }
+
+    /* Floating Emoji Bursts */
+    .burst-emoji {
+      position: fixed;
+      bottom: 70px;
+      font-size: 24px;
+      pointer-events: none;
+      z-index: 999;
+      animation: floatUp 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(0.6) rotate(0deg); opacity: 1; }
+      50% { transform: translateY(-160px) scale(1.3) rotate(15deg); opacity: 0.9; }
+      100% { transform: translateY(-320px) scale(1) rotate(-15deg); opacity: 0; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Dynamic Ambient Backdrop Glow -->
+  <div id="ambient-backdrop"></div>
+
+  <!-- Fullscreen 3D Stage Canvas -->
+  <canvas id="stage-canvas"></canvas>
+
+  <!-- 3D World-Tracking HTML Beacons -->
+  <div id="world-labels">
+    <div id="lbl-farm" class="world-beacon">
+      <span class="beacon-dot" style="color: #10b981; background: #10b981;"></span>
+      <span>🌾 Bharat's Polyhouse Farm (Chitwan)</span>
+    </div>
+    <div id="lbl-transit" class="world-beacon">
+      <span class="beacon-dot" style="color: #38bdf8; background: #38bdf8;"></span>
+      <span>🚚 Prithvi Highway Corridor (Tata Reefer)</span>
+    </div>
+    <div id="lbl-bank" class="world-beacon">
+      <span class="beacon-dot" style="color: #f59e0b; background: #f59e0b;"></span>
+      <span>🏛️ ADBL Agricultural Bank Vault</span>
+    </div>
+
+    <div id="lbl-hazard" class="world-beacon">
+      <span class="beacon-dot" style="color: #f43f5e; background: #f43f5e;"></span>
+      <span>⚠️ 28.4°C CRITICAL HEAT SPOILAGE (Consignment Rejected)</span>
+    </div>
+    <div id="lbl-denied" class="world-beacon">
+      <span class="beacon-dot" style="color: #f43f5e; background: #f43f5e;"></span>
+      <span>❌ LOAN REJECTED: ZERO AUDIT RECORDS</span>
+    </div>
+
+    <div id="lbl-passport" class="world-beacon">
+      <span class="beacon-dot" style="color: #10b981; background: #10b981;"></span>
+      <span>🛡️ RELIABILITY PASSPORT: 94/100 (AAA+ ELITE GROWER)</span>
+    </div>
+
+    <div id="lbl-loan" class="world-beacon">
+      <span class="beacon-dot" style="color: #f59e0b; background: #f59e0b;"></span>
+      <span>💸 RS. 5,00,000 COLLATERAL-FREE DISBURSAL STREAM</span>
+    </div>
+
+    <div id="lbl-b2b-super" class="world-beacon">
+      <span class="beacon-dot" style="color: #06b6d4; background: #06b6d4;"></span>
+      <span>🏢 Bhat-Bhateni Central Procurement Node</span>
+    </div>
+    <div id="lbl-b2b-proc" class="world-beacon">
+      <span class="beacon-dot" style="color: #a855f7; background: #a855f7;"></span>
+      <span>🏭 Wai-Wai Foods Processing Node</span>
+    </div>
+
+    <div id="lbl-macro-income" class="world-beacon">
+      <span class="beacon-dot" style="color: #10b981; background: #10b981;"></span>
+      <span>📈 +38% Farmgate Retained Income</span>
+    </div>
+    <div id="lbl-macro-repay" class="world-beacon">
+      <span class="beacon-dot" style="color: #06b6d4; background: #06b6d4;"></span>
+      <span>🏦 99.8% Loan Repayment Rate</span>
+    </div>
+    <div id="lbl-macro-saved" class="world-beacon">
+      <span class="beacon-dot" style="color: #f59e0b; background: #f59e0b;"></span>
+      <span>🇳🇵 NPR 48B National Harvest Preserved</span>
+    </div>
+
+    <div id="lbl-shield" class="world-beacon">
+      <span class="beacon-dot" style="color: #8b5cf6; background: #8b5cf6;"></span>
+      <span>🔐 Decoupled Liability Attestation Shield</span>
+    </div>
+
+    <div id="lbl-portal" class="world-beacon">
+      <span class="beacon-dot" style="color: #10b981; background: #10b981;"></span>
+      <span>🚀 KrishiTrust Live Operational Gateway</span>
+    </div>
+  </div>
+
+  <!-- Emoji Burst Container -->
+  <div id="emoji-burst-container"></div>
+
+  <!-- Top HUD Bar -->
+  <header id="hud">
+    <div class="hud-interactive">
+      <div class="brand-title">
+        <div class="live-dot"></div>
+        <span>KRISHITRUST</span>
+      </div>
+      <span class="badge-idea">IdeaX 2026</span>
+    </div>
+
+    <div class="hud-interactive">
+      <div class="dots-strip" id="dots-strip"></div>
+    </div>
+
+    <div class="hud-interactive">
+      <div id="timer-box" class="btn-hud" title="Click to pause/resume timer">00:00</div>
+      <button class="btn-hud" id="btn-sound" title="Toggle Sound FX [M]">
+        <span id="sound-icon">🔊</span> Sound
+      </button>
+      <button class="btn-hud" id="btn-fs" title="Toggle Fullscreen [F]">
+        ⛶ Fullscreen
+      </button>
+      <button class="btn-hud btn-hud-primary" id="btn-top-app">
+        Live App →
+      </button>
+    </div>
+  </header>
+
+  <!-- 3D Scene Status Pill (Top Right) -->
+  <div id="scene-status-pill">
+    <div class="scene-dot"></div>
+    <span id="scene-status-text">Ecosystem Overview</span>
+  </div>
+
+  <!-- Interactive 3D Simulation Cockpit (Bottom Right) -->
+  <div id="sim-cockpit">
+    <div class="sim-cockpit-label">
+      <span>⚡</span> SIMULATOR:
+    </div>
+    <button class="cockpit-btn" id="btn-sim-drive" title="Simulate Truck Driving on Mountain Highway">
+      <span>🚚</span> Drive Route
+    </button>
+    <button class="cockpit-btn" id="btn-sim-xray" title="Toggle X-Ray View Inside Reefer Cargo">
+      <span>🔍</span> X-Ray Cargo
+    </button>
+    <button class="cockpit-btn danger" id="btn-sim-hazard" title="Simulate Mugling Landslide & Spoilage">
+      <span>⚠️</span> Spoilage Spike
+    </button>
+    <button class="cockpit-btn" id="btn-sim-disburse" title="Trigger 3D Golden Coin Disbursal Fountain">
+      <span>💰</span> Disburse Loan
+    </button>
+  </div>
+
+  <!-- Navigation Arrows -->
+  <button class="nav-arrow-btn" id="arr-prev" aria-label="Previous Slide">‹</button>
+  <button class="nav-arrow-btn" id="arr-next" aria-label="Next Slide">›</button>
+
+  <!-- Audience Reaction Dock -->
+  <div id="reaction-dock">
+    <button class="reaction-btn" data-icon="🔥">
+      <span>🔥</span> Brilliant <span class="cnt-num" id="c-fire">38</span>
+    </button>
+    <button class="reaction-btn" data-icon="💸">
+      <span>💸</span> Fund Farmers <span class="cnt-num" id="c-cash">54</span>
+    </button>
+    <button class="reaction-btn" data-icon="🚀">
+      <span>🚀</span> Scale It <span class="cnt-num" id="c-scale">29</span>
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SLIDE CONTENT (LOWKEY MINIMAL PITCH CARDS - ZERO ESSAYS)
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="pitch-container">
+
+    <!-- ── SLIDE 0: THE CORE PROMISE ── -->
+    <div class="pitch-card active" data-idx="0">
+      <div>
+        <div class="kicker stagger-1">🌾 THE TRUST LAYER</div>
+        <h1 class="headline stagger-2">From Harvest Loss to <span class="gold-word">Direct Capital Flow</span></h1>
+
+        <div class="symbol-strip stagger-3">
+          <span class="symbol-pill emerald">📍 CHITWAN ➔ KATHMANDU</span>
+          <span class="symbol-pill cyan">🚚 SAE J1939 ECU LINK</span>
+          <span class="symbol-pill gold">🏛️ ADBL BANK ESCROW</span>
+        </div>
+
+        <div class="lens-bar stagger-3">
+          <span>🎯 3D Scene:</span>
+          <button class="lens-btn" id="lens-fly-0">🌐 Flythrough Valley</button>
+        </div>
+
+        <div class="kpi-row stagger-4">
+          <div class="kpi-box">
+            <div class="kpi-number" style="color: #f43f5e;" data-target="37" data-unit="%">0%</div>
+            <div class="kpi-label">Himalayan Spoilage Rate</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-number" style="color: #f59e0b;" data-target="48" data-prefix="NPR " data-unit="B">NPR 0B</div>
+            <div class="kpi-label">Annual Value Destroyed</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-number" style="color: #10b981;" data-target="67.5" data-prefix="Rs. " data-unit="L">Rs. 0L</div>
+            <div class="kpi-label">Sponsorships Unlocked</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-number" style="color: #06b6d4;" data-target="99.8" data-unit="%">0%</div>
+            <div class="kpi-label">Bank Repayment Confidence</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row stagger-4">
+        <button class="btn-action primary" id="btn-next-0">See The Broken Chain ➔</button>
+      </div>
+    </div>
+
+    <!-- ── SLIDE 1: THE BROKEN CHAIN ── -->
+    <div class="pitch-card" data-idx="1">
+      <div>
+        <div class="kicker stagger-1" style="color: #f43f5e;">⚠️ THE VICIOUS CYCLE</div>
+        <h2 class="headline stagger-2">No Data = <span class="rose-word">No Credit</span> = Zero Growth</h2>
+
+        <div class="symbol-strip stagger-3">
+          <span class="symbol-pill rose">⚠️ 28.4°C HEAT SPIKE</span>
+          <span class="symbol-pill rose">🛑 COMPRESSOR SHUTOFF</span>
+          <span class="symbol-pill rose">❌ 100% UNFAIR BLAME</span>
+        </div>
+
+        <div class="lens-bar stagger-3" style="border-color: rgba(244,63,94,0.3);">
+          <span style="color: #fda4af;">🎯 3D Scene:</span>
+          <button class="lens-btn" id="lens-hazard-1" style="color: #f43f5e; border-color: rgba(244,63,94,0.3);">⚠️ Focus Highway Hazard</button>
+        </div>
+
+        <div class="symbolic-rows stagger-4">
+          <div class="symbolic-item" style="border-left: 3px solid #f43f5e;">
+            <span style="font-weight: 800; color: #fda4af;">Mountain Spoilage</span>
+            <span style="font-family: 'JetBrains Mono'; color: #f43f5e;">Mugling Choke: -40% Payout</span>
+          </div>
+          <div class="symbolic-item" style="border-left: 3px solid #f59e0b;">
+            <span style="font-weight: 800; color: #fde68a;">Bundled Liability</span>
+            <span style="font-family: 'JetBrains Mono'; color: #f59e0b;">Farmers Absorb 100% Loss</span>
+          </div>
+          <div class="symbolic-item" style="border-left: 3px solid #06b6d4;">
+            <span style="font-weight: 800; color: #67e8f9;">Credit Block</span>
+            <span style="font-family: 'JetBrains Mono'; color: #06b6d4;">ADBL Rejection: 0 Data</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row stagger-4">
+        <button class="btn-action primary" id="btn-next-1">The Solution ➔</button>
+      </div>
+    </div>
+
+    <!-- ── SLIDE 2: THE RELIABILITY PASSPORT ── -->
+    <div class="pitch-card" data-idx="2">
+      <div>
+        <div class="kicker stagger-1">💡 OUR CORE INNOVATION</div>
+        <h2 class="headline stagger-2">The Farmer's <span class="glow-word">Reliability Passport</span></h2>
+
+        <div class="symbol-strip stagger-3">
+          <span class="symbol-pill emerald">🛡️ CRYPTO HASH: KT-94</span>
+          <span class="symbol-pill gold">🎖️ AAA+ ELITE GROWER</span>
+          <span class="symbol-pill emerald">💳 PRE-APPROVED: RS. 5L</span>
+        </div>
+
+        <div class="lens-bar stagger-3">
+          <span>🎯 3D Scene:</span>
+          <button class="lens-btn" id="lens-passport-2">🎖️ Spin Passport Hologram</button>
+        </div>
+
+        <div class="symbolic-rows stagger-4">
+          <div class="symbolic-item">
+            <span>📋 Farmgate Harvest Audit</span>
+            <span style="color: #34d399; font-weight: 800;">VERIFIED (18 BATCHES)</span>
+          </div>
+          <div class="symbolic-item">
+            <span>📡 J1939 ECU Telematics</span>
+            <span style="color: #38bdf8; font-weight: 800;">4.8°C CHILLED TRANSIT</span>
+          </div>
+          <div class="symbolic-item" style="background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3);">
+            <span>🎖️ Bank Credit Score</span>
+            <span style="color: #fbbf24; font-weight: 900; font-family: 'JetBrains Mono';">94 / 100 ELITE</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row stagger-4">
+        <button class="btn-action primary" id="btn-next-2">Unlocking Loans ➔</button>
+      </div>
+    </div>
+
+    <!-- ── SLIDE 3: DIRECT LOANS & SPONSORSHIPS ── -->
+    <div class="pitch-card" data-idx="3">
+      <div>
+        <div class="kicker stagger-1">🤝 CAPITAL AT LAST</div>
+        <h2 class="headline stagger-2">Unlocking <span class="gold-word">Collateral-Free Capital</span></h2>
+
+        <div class="symbol-strip stagger-3">
+          <span class="symbol-pill gold">💰 0% LAND COLLATERAL</span>
+          <span class="symbol-pill emerald">⚡ 1-CLICK DISBURSAL</span>
+          <span class="symbol-pill cyan">📲 eSewa SETTLED</span>
+        </div>
+
+        <div class="lens-bar stagger-3" style="border-color: rgba(245,158,11,0.3);">
+          <span style="color: #fde68a;">🎯 3D Scene:</span>
+          <button class="lens-btn" id="lens-coins-3" style="color: #f59e0b; border-color: rgba(245,158,11,0.3);">💸 Stream Golden Coins</button>
+        </div>
+
+        <div class="stagger-4" style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 800; color: #94a3b8; margin-bottom: 6px;">
+            <span>BHARAT SHARMA (CHITWAN)</span>
+            <span style="color: #10b981; font-family: 'JetBrains Mono';">94/100 PASSPORT</span>
+          </div>
+          
+          <div style="width: 100%; height: 7px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; margin-bottom: 6px;">
+            <div id="fund-bar" style="width: 76%; height: 100%; background: linear-gradient(90deg, #10b981, #f59e0b); transition: width 0.8s;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 10.5px; font-family: 'JetBrains Mono'; color: #34d399;">
+            <span id="fund-status">Rs. 3,80,000 Funded (76%)</span>
+            <span>Target: Rs. 5,00,000</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row stagger-4">
+        <button class="btn-action gold" id="btn-approve-loan-demo">💰 1-Click Disburse</button>
+        <button class="btn-action primary" id="btn-next-3">The Marketplace ➔</button>
+      </div>
+    </div>
+
+    <!-- ── SLIDE 4: THE B2B DATA MARKETPLACE ── -->
+    <div class="pitch-card" data-idx="4">
+      <div>
+        <div class="kicker stagger-1">📊 B2B MONETIZATION</div>
+        <h2 class="headline stagger-2">Monetizing <span class="cyan-word">Agricultural Intelligence</span></h2>
+
+        <div class="symbol-strip stagger-3">
+          <span class="symbol-pill cyan">🏢 BHAT-BHATENI CENTRAL</span>
+          <span class="symbol-pill purple">🏭 WAI-WAI FOODS</span>
+          <span class="symbol-pill gold">📡 NPR 1,500 / QUERY</span>
+        </div>
+
+        <div class="lens-bar stagger-3" style="border-color: rgba(6,182,212,0.3);">
+          <span style="color: #67e8f9;">🎯 3D Scene:</span>
+          <button class="lens-btn" id="lens-b2b-4" style="color: #06b6d4; border-color: rgba(6,182,212,0.3);">📡 Pulse Corporate Radar</button>
+        </div>
+
+        <div class="symbolic-rows stagger-4">
+          <div class="symbolic-item" style="border-left: 3px solid #10b981;">
+            <span>Supermarkets & Processors</span>
+            <span style="color: #34d399; font-weight: 800;">TOP 10% CERTIFIED OFF-TAKE</span>
+          </div>
+          <div class="symbolic-item" style="border-left: 3px solid #06b6d4;">
+            <span>ADBL & Shikhar Insurance</span>
+            <span style="color: #38bdf8; font-weight: 800;">&lt;0.2% DEFAULT UNDERWRITING</span>
+          </div>
+          <div class="symbolic-item" style="border-left: 3px solid #f59e0b;">
+            <span>High-Scoring Farmers</span>
+            <span style="color: #fbbf24; font-weight: 800;">+25% PREMIUM PRICING</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row stagger-4">
+        <button class="btn-action primary" id="btn-next-4">Macro Impact ➔</button>
+      </div>
+    </div>
+
+    <!-- ── SLIDE 5: NATIONAL ECONOMIC IMPACT ── -->
+    <div class="pitch-card" data-idx="5">
+      <div>
+        <div class="kicker stagger-1">🇳🇵 MACRO PROSPERITY</div>
+        <h2 class="headline stagger-2">Empowering Farmers, <span class="gold-word">Strengthening Nepal</span></h2>
+
+        <div class="symbol-strip stagger-3">
+          <span class="symbol-pill emerald">🇳🇵 NRB DEPRIVED SECTOR MANDATE</span>
+          <span class="symbol-pill cyan">⚡ HIGHWAY CORRIDORS</span>
+        </div>
+
+        <div class="lens-bar stagger-3">
+          <span>🎯 3D Scene:</span>
+          <button class="lens-btn" id="lens-macro-5">📊 Re-animate Growth Pillars</button>
+        </div>
+
+        <div class="kpi-row stagger-4">
+          <div class="kpi-box">
+            <div class="kpi-number" style="color: #10b981;" data-target="38" data-prefix="+" data-unit="%">+0%</div>
+            <div class="kpi-label">Retained Farmgate Income</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-number" style="color: #06b6d4;" data-target="99.8" data-unit="%">0%</div>
+            <div class="kpi-label">Bank Loan Repayment Rate</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-number" style="color: #f59e0b;" data-target="48" data-prefix="NPR " data-unit="B">NPR 0B</div>
+            <div class="kpi-label">National Harvest Saved</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-number" style="color: #fff;" data-target="3.5" data-unit="x">0x</div>
+            <div class="kpi-label">Farm Productivity Multiplier</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row stagger-4">
+        <button class="btn-action primary" id="btn-next-5">The Moat ➔</button>
+      </div>
+    </div>
+
+    <!-- ── SLIDE 6: COMPETITIVE ADVANTAGE (DECOUPLED LIABILITY) ── -->
+    <div class="pitch-card" data-idx="6">
+      <div>
+        <div class="kicker stagger-1">🏰 THE UNBREAKABLE MOAT</div>
+        <h2 class="headline stagger-2">Mathematical <span class="purple-word">Liability Decoupling</span></h2>
+
+        <div class="symbol-strip stagger-3">
+          <span class="symbol-pill purple">🔐 HARDWARE CAN-BUS LOCK</span>
+          <span class="symbol-pill emerald">⚖️ MATHEMATICAL DECOUPLING</span>
+        </div>
+
+        <div class="lens-bar stagger-3" style="border-color: rgba(139,92,246,0.3);">
+          <span style="color: #c4b5fd;">🎯 3D Scene:</span>
+          <button class="lens-btn" id="lens-shield-6" style="color: #8b5cf6; border-color: rgba(139,92,246,0.3);">🛡️ Pulse Attestation Shield</button>
+        </div>
+
+        <div class="symbolic-rows stagger-4">
+          <div class="symbolic-item">
+            <span style="color: #f43f5e; font-weight: 800;">Traditional Banks</span>
+            <span style="color: #fda4af;">Demand land collateral farmers lack</span>
+          </div>
+          <div class="symbolic-item">
+            <span style="color: #f43f5e; font-weight: 800;">Generic GPS Trackers</span>
+            <span style="color: #fda4af;">Coordinates only; 0 cargo integrity</span>
+          </div>
+          <div class="symbolic-item" style="background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.35);">
+            <span style="color: #34d399; font-weight: 900;">KrishiTrust</span>
+            <span style="color: #34d399; font-weight: 800;">Carrier insurance pays faults; farmer insulated</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row stagger-4">
+        <button class="btn-action primary" id="btn-next-6">Launch Platform ➔</button>
+      </div>
+    </div>
+
+    <!-- ── SLIDE 7: FINALE & LIVE DEMO ── -->
+    <div class="pitch-card" data-idx="7">
+      <div>
+        <div class="kicker stagger-1" style="color: #10b981;">🚀 OPERATIONAL SYSTEM</div>
+        <h2 class="headline stagger-2">Experience The Live <span class="glow-word">Platform.</span></h2>
+
+        <div class="symbol-strip stagger-3">
+          <span class="symbol-pill emerald">🟢 LIVE IN CHITWAN</span>
+          <span class="symbol-pill cyan">🏛️ ADBL CONNECTED</span>
+          <span class="symbol-pill gold">🛡️ SHIKHAR INSURANCE</span>
+        </div>
+
+        <div class="lens-bar stagger-3">
+          <span>🎯 3D Scene:</span>
+          <button class="lens-btn" id="lens-portal-7">🌀 Accelerate Quantum Gateway</button>
+        </div>
+
+        <div class="symbolic-rows stagger-4">
+          <div class="symbolic-item">
+            <span>Direct Sponsor Marketplace</span>
+            <span style="color: #34d399; font-weight: 800;">ACTIVE</span>
+          </div>
+          <div class="symbolic-item">
+            <span>CAN-Bus Telemetry Stream</span>
+            <span style="color: #38bdf8; font-weight: 800;">500 KBPS LIVE</span>
+          </div>
+          <div class="symbolic-item">
+            <span>Multi-Role Stakeholder Portals</span>
+            <span style="color: #fbbf24; font-weight: 800;">READY</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row stagger-4">
+        <button class="btn-action primary" id="btn-launch-operational" style="padding: 11px 22px; font-size: 13px; width: 100%; justify-content: center;">
+          🚀 Open Live Operational Platform ➔
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       THREE.JS: ULTIMATE INTERACTIVE 3D SIMULATION ENGINE
+  ═══════════════════════════════════════════════════════════════ -->
+  <script>
+
+    /* ─── ENHANCED WEB AUDIO SYNTHESIZER ─── */
+    let audioCtx = null, soundOn = true;
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioClass) audioCtx = new AudioClass();
+      }
+    }
+    function playWhoosh() {
+      if (!soundOn || !audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(620, audioCtx.currentTime + 0.16);
+        osc.frequency.exponentialRampToValueAtTime(70, audioCtx.currentTime + 0.4);
+        gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.42);
+      } catch (e) {}
+    }
+    function playCoins() {
+      if (!soundOn || !audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        [987.77, 1318.51, 1567.98, 2093.00, 2637.02].forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f, audioCtx.currentTime + i * 0.05);
+          gain.gain.setValueAtTime(0.001, audioCtx.currentTime + i * 0.05);
+          gain.gain.linearRampToValueAtTime(0.13, audioCtx.currentTime + i * 0.05 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.05 + 0.28);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(audioCtx.currentTime + i * 0.05);
+          osc.stop(audioCtx.currentTime + i * 0.05 + 0.3);
+        });
+      } catch (e) {}
+    }
+    function playChime() {
+      if (!soundOn || !audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, audioCtx.currentTime + i * 0.07);
+          gain.gain.setValueAtTime(0.001, audioCtx.currentTime + i * 0.07);
+          gain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + i * 0.07 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.07 + 0.35);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(audioCtx.currentTime + i * 0.07);
+          osc.stop(audioCtx.currentTime + i * 0.07 + 0.38);
+        });
+      } catch (e) {}
+    }
+    function playBrakes() {
+      if (!soundOn || !audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const bufferSize = audioCtx.sampleRate * 0.4;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1400, audioCtx.currentTime);
+        filter.frequency.linearRampToValueAtTime(400, audioCtx.currentTime + 0.35);
+
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.38);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start();
+      } catch (e) {}
+    }
+    function playWarp() {
+      if (!soundOn || !audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.85);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.45);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.9);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.92);
+      } catch (e) {}
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       3D SCENE & LIVING DIGITAL TWIN SIMULATOR
+    ═══════════════════════════════════════════════════════════════ */
+    let scene, camera, renderer, worldGroup;
+    let farmGroup, roadGroup, truckMesh, reeferFan, bankGroup, protocolBeam;
+    let targetFogColor, currentFogColor;
+    
+    // TRUCK SIMULATION CONTROLLER & ELEMENTS
+    let reeferBoxMaterial, cargoCrates = [], truckWheels = [];
+    let headlightBeamLeft, headlightBeamRight;
+    let heatSmokeGroup, frostSteamGroup;
+    let roadDashes = [], mountainMist;
+    let simDriving = false, simDriveT = 0.5, simXray = false, simHazard = false;
+
+    // SLIDE-WISE DEDICATED 3D VISUAL GROUPS:
+    let hazardGroup;     // Slide 1: Red Hazard / Broken chain barrier
+    let passportGroup;   // Slide 2: Floating 3D Credit Score & Golden Stars
+    let loanStreamGroup; // Slide 3: Stream of flowing gold coins from Bank to Farm
+    let b2bGroup;        // Slide 4: B2B Supermarket & Agribusiness Data Nodes
+    let macroGroup;      // Slide 5: 3D Rising National Economic Growth Pillars
+    let shieldGroup;     // Slide 6: 3D Holographic Cryptographic Shield Dome
+    let portalGroup;     // Slide 7: 3D Quantum Portal Vortex for Finale
+    let backgroundParticles; // Ambient micro floating cyber particles
+    let energyPulses = [];   // Dynamic moving energy packets along protocol beam
+    let starStreaks;         // Slide 7 warp star streaks
+
+    let isUserDragging = false, lastMouse = { x: 0, y: 0 };
+    let worldRotationY = 0.28, worldRotationX = 0.16;
+
+    // 3D Anchors for HTML world-tracking beacons
+    const anchors = {
+      farm: new THREE.Vector3(-6.5, 2.8, 1.5),
+      transit: new THREE.Vector3(0.5, 2.6, 0.5),
+      bank: new THREE.Vector3(8.5, 3.4, 1.0),
+      hazard: new THREE.Vector3(1.5, 2.8, 0.5),
+      denied: new THREE.Vector3(8.5, 4.0, 1.0),
+      passport: new THREE.Vector3(-6.5, 4.8, 1.5),
+      loan: new THREE.Vector3(1.5, 4.8, 0.5),
+      b2bSuper: new THREE.Vector3(-2.0, 5.0, -4.0),
+      b2bProc: new THREE.Vector3(2.5, 5.2, -4.5),
+      macroIncome: new THREE.Vector3(-3.0, 4.5, -1.5),
+      macroRepay: new THREE.Vector3(1.0, 5.8, -2.0),
+      macroSaved: new THREE.Vector3(5.0, 7.0, -1.5),
+      shield: new THREE.Vector3(1.5, 7.0, 1.0),
+      portal: new THREE.Vector3(1.5, 5.5, 0.5)
+    };
+
+    const slideConfigs = [
+      { // Slide 0: Overview
+        title: "Ecosystem Overview",
+        cam: { x: 8.5, y: 7.5, z: 14.5, lookX: 0.8, lookY: 1.2, lookZ: 0, rotY: 0.28 },
+        color: 0x10b981,
+        fogColor: 0x030712,
+        accentGlow: "rgba(16, 185, 129, 0.22)"
+      },
+      { // Slide 1: Crisis
+        title: "Broken Transit & Credit Denial",
+        cam: { x: 1.5, y: 4.2, z: 8.5, lookX: 1.0, lookY: 1.1, lookZ: 0.5, rotY: 0.35 },
+        color: 0xf43f5e,
+        fogColor: 0x180509,
+        accentGlow: "rgba(244, 63, 94, 0.28)"
+      },
+      { // Slide 2: Passport
+        title: "Farmer Reliability Score: 94/100",
+        cam: { x: -4.2, y: 4.5, z: 9.5, lookX: -4.2, lookY: 2.2, lookZ: 1.0, rotY: 0.1 },
+        color: 0x10b981,
+        fogColor: 0x03140e,
+        accentGlow: "rgba(16, 185, 129, 0.28)"
+      },
+      { // Slide 3: Loans & Sponsorships
+        title: "Sponsorship Capital Stream",
+        cam: { x: 4.5, y: 5.5, z: 12.0, lookX: 1.8, lookY: 1.8, lookZ: 0.5, rotY: 0.25 },
+        color: 0xf59e0b,
+        fogColor: 0x180f03,
+        accentGlow: "rgba(245, 158, 11, 0.28)"
+      },
+      { // Slide 4: B2B Marketplace
+        title: "B2B Agricultural Intelligence",
+        cam: { x: 1.5, y: 8.5, z: 12.5, lookX: 1.2, lookY: 1.5, lookZ: 0, rotY: 0.3 },
+        color: 0x06b6d4,
+        fogColor: 0x031218,
+        accentGlow: "rgba(6, 182, 212, 0.28)"
+      },
+      { // Slide 5: Macro Growth
+        title: "National Economic Growth",
+        cam: { x: 0, y: 10.0, z: 14.0, lookX: 0, lookY: 1.6, lookZ: 0, rotY: 0.05 },
+        color: 0x10b981,
+        fogColor: 0x030f10,
+        accentGlow: "rgba(16, 185, 129, 0.25)"
+      },
+      { // Slide 6: Defensible Moat
+        title: "Decoupled Liability Shield",
+        cam: { x: 2.5, y: 5.2, z: 11.5, lookX: 0.8, lookY: 1.5, lookZ: 0, rotY: 0.25 },
+        color: 0x8b5cf6,
+        fogColor: 0x0e0518,
+        accentGlow: "rgba(139, 92, 246, 0.28)"
+      },
+      { // Slide 7: Live Finale
+        title: "Operational Portal Ready",
+        cam: { x: 0.5, y: 3.8, z: 12.0, lookX: 0.5, lookY: 1.5, lookZ: 0, rotY: 0.0 },
+        color: 0x10b981,
+        fogColor: 0x030712,
+        accentGlow: "rgba(16, 185, 129, 0.32)"
+      }
+    ];
+
+    let currentCamTarget = slideConfigs[0].cam;
+
+    function init3DStage() {
+      const canvas = document.getElementById('stage-canvas');
+      scene = new THREE.Scene();
+      currentFogColor = new THREE.Color(0x030712);
+      targetFogColor = new THREE.Color(0x030712);
+      scene.fog = new THREE.FogExp2(currentFogColor, 0.024);
+
+      camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(currentCamTarget.x, currentCamTarget.y, currentCamTarget.z);
+
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+
+      function updateCameraProjection() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        camera.aspect = w / h;
+        // Rightward offset: centers 3D diorama in open right ~66% of screen
+        if (w > 800) {
+          camera.setViewOffset(w, h, -w * 0.15, 0, w, h);
+        } else {
+          camera.clearViewOffset();
+        }
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }
+      updateCameraProjection();
+
+      worldGroup = new THREE.Group();
+      worldGroup.scale.set(0.68, 0.68, 0.68);
+      scene.add(worldGroup);
+
+      // Dynamic Lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+      scene.add(ambientLight);
+
+      const sun = new THREE.DirectionalLight(0xffffff, 1.3);
+      sun.position.set(15, 25, 12);
+      sun.castShadow = true;
+      scene.add(sun);
+
+      const emeraldLight = new THREE.PointLight(0x10b981, 3.5, 45);
+      emeraldLight.position.set(-8, 5, 4);
+      scene.add(emeraldLight);
+
+      const goldLight = new THREE.PointLight(0xf59e0b, 3.5, 45);
+      goldLight.position.set(10, 6, 4);
+      scene.add(goldLight);
+
+      // Cyber Ground Grid
+      const grid = new THREE.GridHelper(90, 45, 0x10b981, 0x1e293b);
+      grid.position.y = -0.05;
+      scene.add(grid);
+
+      // Mountain Valley Range
+      const mountainGeo = new THREE.ConeGeometry(8, 12, 5);
+      const mountainMat = new THREE.MeshStandardMaterial({ color: 0x09101d, roughness: 0.9, flatShading: true });
+      for (let m = 0; m < 8; m++) {
+        const mount = new THREE.Mesh(mountainGeo, mountainMat);
+        mount.position.set(-35 + m * 10, 3, -22 - (m % 3) * 4);
+        mount.scale.set(1 + (m % 3) * 0.4, 0.8 + (m % 2) * 0.5, 1);
+        scene.add(mount);
+      }
+
+      // Ambient Floating Cyber Particles
+      const partCount = 140;
+      const partGeo = new THREE.BufferGeometry();
+      const partPos = new Float32Array(partCount * 3);
+      for (let p = 0; p < partCount * 3; p += 3) {
+        partPos[p] = (Math.random() - 0.5) * 40;
+        partPos[p + 1] = Math.random() * 14;
+        partPos[p + 2] = (Math.random() - 0.5) * 30;
+      }
+      partGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
+      const partMat = new THREE.PointsMaterial({ color: 0x10b981, size: 0.18, transparent: true, opacity: 0.65 });
+      backgroundParticles = new THREE.Points(partGeo, partMat);
+      scene.add(backgroundParticles);
+
+      // Hyperspace Star Streaks (for Slide 7)
+      const streakCount = 160;
+      const streakGeo = new THREE.BufferGeometry();
+      const streakPos = new Float32Array(streakCount * 3);
+      for (let s = 0; s < streakCount * 3; s += 3) {
+        streakPos[s] = (Math.random() - 0.5) * 30;
+        streakPos[s + 1] = (Math.random() - 0.5) * 20;
+        streakPos[s + 2] = Math.random() * 25;
+      }
+      streakGeo.setAttribute('position', new THREE.BufferAttribute(streakPos, 3));
+      const streakMat = new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.22, transparent: true, opacity: 0 });
+      starStreaks = new THREE.Points(streakGeo, streakMat);
+      scene.add(starStreaks);
+
+      // ── 1. THE FARM POD (CHITWAN) ──
+      farmGroup = new THREE.Group();
+      farmGroup.position.set(-6.5, 0, 1.5);
+      worldGroup.add(farmGroup);
+
+      const farmBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(3.2, 3.5, 0.4, 32),
+        new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.8 })
+      );
+      farmBase.position.y = 0.2;
+      farmGroup.add(farmBase);
+
+      const polyArch = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.6, 1.6, 2.4, 16, 1, false, 0, Math.PI),
+        new THREE.MeshStandardMaterial({ color: 0x34d399, transparent: true, opacity: 0.45, roughness: 0.2 })
+      );
+      polyArch.rotation.z = Math.PI / 2;
+      polyArch.rotation.x = Math.PI;
+      polyArch.position.set(-0.4, 1.4, -0.4);
+      farmGroup.add(polyArch);
+
+      const barn = new THREE.Mesh(
+        new THREE.BoxGeometry(1.8, 1.2, 1.8),
+        new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.5 })
+      );
+      barn.position.set(-0.4, 0.6, -0.4);
+      farmGroup.add(barn);
+
+      for (let c = 0; c < 3; c++) {
+        const crate = new THREE.Mesh(
+          new THREE.BoxGeometry(0.7, 0.5, 0.7),
+          new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 })
+        );
+        crate.position.set(0.8 + c * 0.4, 0.45, 0.5 - c * 0.3);
+        farmGroup.add(crate);
+
+        const tomato = new THREE.Mesh(
+          new THREE.SphereGeometry(0.18, 12, 12),
+          new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3 })
+        );
+        tomato.position.set(0.8 + c * 0.4, 0.75, 0.5 - c * 0.3);
+        farmGroup.add(tomato);
+      }
+
+      // ── 2. TRANSIT HIGHWAY & INTERACTIVE REEFER TRUCK ──
+      roadGroup = new THREE.Group();
+      worldGroup.add(roadGroup);
+
+      const road = new THREE.Mesh(
+        new THREE.BoxGeometry(16, 0.15, 2.8),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4 })
+      );
+      road.position.set(1.5, 0.1, 0.5);
+      roadGroup.add(road);
+
+      roadDashes = [];
+      for (let d = 0; d < 12; d++) {
+        const dash = new THREE.Mesh(
+          new THREE.BoxGeometry(0.75, 0.18, 0.12),
+          new THREE.MeshBasicMaterial({ color: 0x10b981 })
+        );
+        dash.position.set(-6.0 + d * 1.35, 0.12, 0.5);
+        roadGroup.add(dash);
+        roadDashes.push(dash);
+      }
+
+      // Mountain Valley Atmospheric Mist
+      const mistGeo = new THREE.BufferGeometry();
+      const mistCount = 75;
+      const mistPos = new Float32Array(mistCount * 3);
+      for (let m = 0; m < mistCount * 3; m += 3) {
+        mistPos[m] = (Math.random() - 0.5) * 22;
+        mistPos[m + 1] = 0.4 + Math.random() * 3.5;
+        mistPos[m + 2] = (Math.random() - 0.5) * 14;
+      }
+      mistGeo.setAttribute('position', new THREE.BufferAttribute(mistPos, 3));
+      const mistMat = new THREE.PointsMaterial({
+        color: 0x38bdf8,
+        size: 0.35,
+        transparent: true,
+        opacity: 0.22
+      });
+      mountainMist = new THREE.Points(mistGeo, mistMat);
+      worldGroup.add(mountainMist);
+
+      truckMesh = new THREE.Group();
+      truckMesh.position.set(0.5, 0.2, 0.5);
+      roadGroup.add(truckMesh);
+
+      const cab = new THREE.Mesh(
+        new THREE.BoxGeometry(1.8, 1.5, 1.8),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.2 })
+      );
+      cab.position.set(2.4, 1.0, 0);
+      truckMesh.add(cab);
+
+      const ws = new THREE.Mesh(
+        new THREE.BoxGeometry(0.1, 0.7, 1.5),
+        new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.9 })
+      );
+      ws.position.set(3.31, 1.2, 0);
+      truckMesh.add(ws);
+
+      const hlGeo = new THREE.CylinderGeometry(0.12, 0.4, 3.5, 16, 1, true);
+      const hlMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.25 });
+      
+      headlightBeamLeft = new THREE.Mesh(hlGeo, hlMat);
+      headlightBeamLeft.rotation.z = -Math.PI / 2;
+      headlightBeamLeft.position.set(5.1, 0.7, -0.6);
+      truckMesh.add(headlightBeamLeft);
+
+      headlightBeamRight = new THREE.Mesh(hlGeo, hlMat);
+      headlightBeamRight.rotation.z = -Math.PI / 2;
+      headlightBeamRight.position.set(5.1, 0.7, 0.6);
+      truckMesh.add(headlightBeamRight);
+
+      reeferBoxMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xf8fafc, 
+        roughness: 0.3,
+        transparent: true,
+        opacity: 0.96
+      });
+      const reeferBox = new THREE.Mesh(
+        new THREE.BoxGeometry(3.6, 2.0, 1.9),
+        reeferBoxMaterial
+      );
+      reeferBox.position.set(-0.4, 1.25, 0);
+      truckMesh.add(reeferBox);
+
+      for (let cr = 0; cr < 4; cr++) {
+        const crateMesh = new THREE.Mesh(
+          new THREE.BoxGeometry(0.7, 0.5, 0.6),
+          new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.4 })
+        );
+        crateMesh.position.set(-1.4 + cr * 0.7, 0.65, (cr % 2 === 0 ? -0.4 : 0.4));
+        truckMesh.add(crateMesh);
+        cargoCrates.push(crateMesh);
+
+        const prod = new THREE.Mesh(
+          new THREE.SphereGeometry(0.14, 8, 8),
+          new THREE.MeshBasicMaterial({ color: 0x34d399 })
+        );
+        prod.position.set(-1.4 + cr * 0.7, 0.95, (cr % 2 === 0 ? -0.4 : 0.4));
+        truckMesh.add(prod);
+        cargoCrates.push(prod);
+      }
+
+      const reeferUnit = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.9, 1.2),
+        new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.5, roughness: 0.4 })
+      );
+      reeferUnit.position.set(1.5, 1.8, 0);
+      truckMesh.add(reeferUnit);
+
+      reeferFan = new THREE.Mesh(
+        new THREE.TorusGeometry(0.24, 0.04, 8, 16),
+        new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+      );
+      reeferFan.position.set(1.76, 1.8, 0);
+      truckMesh.add(reeferFan);
+
+      const wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.35, 16);
+      const wheelMat = new THREE.MeshStandardMaterial({ color: 0x020617, roughness: 0.9 });
+      [-1.6, 0.6, 2.4].forEach(wx => {
+        [-0.95, 0.95].forEach(wz => {
+          const wh = new THREE.Mesh(wheelGeo, wheelMat);
+          wh.rotation.x = Math.PI / 2;
+          wh.position.set(wx, 0.42, wz);
+          truckMesh.add(wh);
+          truckWheels.push(wh);
+        });
+      });
+
+      heatSmokeGroup = new THREE.Group();
+      heatSmokeGroup.position.set(1.5, 2.3, 0);
+      heatSmokeGroup.visible = false;
+      truckMesh.add(heatSmokeGroup);
+
+      for (let sm = 0; sm < 8; sm++) {
+        const smMesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.25 + sm * 0.05, 8, 8),
+          new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0.4 })
+        );
+        smMesh.userData = { vy: 0.015 + Math.random() * 0.01, vx: (Math.random() - 0.5) * 0.01, baseScale: 1 + sm * 0.2 };
+        smMesh.position.set((Math.random() - 0.5) * 0.4, sm * 0.2, (Math.random() - 0.5) * 0.4);
+        heatSmokeGroup.add(smMesh);
+      }
+
+      // ── 3. INSTITUTIONAL BANK POD (RIGHT) ──
+      bankGroup = new THREE.Group();
+      bankGroup.position.set(8.5, 0, 1.0);
+      worldGroup.add(bankGroup);
+
+      const bankBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(3.4, 3.8, 0.4, 32),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.7 })
+      );
+      bankBase.position.y = 0.2;
+      bankGroup.add(bankBase);
+
+      for (let p = 0; p < 6; p++) {
+        const angle = (p / 6) * Math.PI * 2;
+        const pillar = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.18, 0.22, 1.8, 16),
+          new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.8, roughness: 0.2 })
+        );
+        pillar.position.set(Math.cos(angle) * 1.1, 1.1, Math.sin(angle) * 1.1);
+        bankGroup.add(pillar);
+      }
+
+      const vaultDome = new THREE.Mesh(
+        new THREE.SphereGeometry(0.9, 24, 24),
+        new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.15 })
+      );
+      vaultDome.position.set(0, 1.8, 0);
+      bankGroup.add(vaultDome);
+
+      // ── 4. LIVE PROTOCOL BEAM & DYNAMIC ENERGY PACKETS ──
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-6.5, 1.8, 1.5),
+        new THREE.Vector3(0.5, 2.5, 0.5),
+        new THREE.Vector3(8.5, 2.5, 1.0)
+      ]);
+      const tubeGeo = new THREE.TubeGeometry(curve, 40, 0.08, 8, false);
+      const tubeMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.65 });
+      protocolBeam = new THREE.Mesh(tubeGeo, tubeMat);
+      worldGroup.add(protocolBeam);
+
+      const pulseGeo = new THREE.SphereGeometry(0.12, 12, 12);
+      const pulseMat = new THREE.MeshBasicMaterial({ color: 0x34d399 });
+      for (let ep = 0; ep < 12; ep++) {
+        const pMesh = new THREE.Mesh(pulseGeo, pulseMat);
+        pMesh.userData = { t: ep / 12, speed: 0.005 };
+        worldGroup.add(pMesh);
+        energyPulses.push(pMesh);
+      }
+
+      // ── A. SLIDE 1: HAZARD BARRIER ──
+      hazardGroup = new THREE.Group();
+      hazardGroup.position.set(1.5, 0, 0.5);
+      hazardGroup.visible = false;
+      worldGroup.add(hazardGroup);
+
+      const hazardBarrier = new THREE.Mesh(
+        new THREE.BoxGeometry(0.3, 1.6, 2.6),
+        new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.3 })
+      );
+      hazardBarrier.position.y = 0.9;
+      hazardGroup.add(hazardBarrier);
+
+      for (let hr = 0; hr < 2; hr++) {
+        const hazardRing = new THREE.Mesh(
+          new THREE.TorusGeometry(1.6 + hr * 0.8, 0.06, 16, 40),
+          new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0.85 - hr * 0.3 })
+        );
+        hazardRing.rotation.y = Math.PI / 2;
+        hazardRing.position.y = 1.2;
+        hazardGroup.add(hazardRing);
+      }
+
+      const hazardLight = new THREE.PointLight(0xf43f5e, 4, 15);
+      hazardLight.position.set(0, 2.5, 0);
+      hazardGroup.add(hazardLight);
+
+      // ── B. SLIDE 2: 3D DIGITAL RELIABILITY PASSPORT ──
+      passportGroup = new THREE.Group();
+      passportGroup.position.set(-6.5, 3.4, 1.5);
+      passportGroup.visible = false;
+      worldGroup.add(passportGroup);
+
+      const scoreRing1 = new THREE.Mesh(
+        new THREE.TorusGeometry(1.4, 0.09, 16, 50),
+        new THREE.MeshStandardMaterial({ color: 0x10b981, metalness: 0.8, roughness: 0.2 })
+      );
+      passportGroup.add(scoreRing1);
+
+      const scoreRing2 = new THREE.Mesh(
+        new THREE.TorusGeometry(1.7, 0.05, 16, 50),
+        new THREE.MeshBasicMaterial({ color: 0x34d399, transparent: true, opacity: 0.6 })
+      );
+      scoreRing2.rotation.x = Math.PI / 3;
+      passportGroup.add(scoreRing2);
+
+      const badgePlate = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.1, 1.1, 0.08, 32),
+        new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.5 })
+      );
+      badgePlate.rotation.x = Math.PI / 2;
+      passportGroup.add(badgePlate);
+
+      passportGroup.stars = [];
+      for (let st = 0; st < 5; st++) {
+        const star = new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.18, 0),
+          new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.95, roughness: 0.1 })
+        );
+        const theta = (st / 5) * Math.PI * 2;
+        star.userData = { theta, radius: 0.85 };
+        star.position.set(Math.cos(theta) * 0.85, Math.sin(theta) * 0.85, 0.1);
+        passportGroup.add(star);
+        passportGroup.stars.push(star);
+      }
+
+      // ── C. SLIDE 3: FLOWING CAPITAL STREAM ──
+      loanStreamGroup = new THREE.Group();
+      loanStreamGroup.visible = false;
+      worldGroup.add(loanStreamGroup);
+
+      const bridgeCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(8.5, 2.5, 1.0),
+        new THREE.Vector3(1.5, 4.8, 0.5),
+        new THREE.Vector3(-6.5, 1.8, 1.5)
+      ]);
+      const bridgeGeo = new THREE.TubeGeometry(bridgeCurve, 40, 0.07, 8, false);
+      const bridgeMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.45 });
+      const bridgeMesh = new THREE.Mesh(bridgeGeo, bridgeMat);
+      loanStreamGroup.add(bridgeMesh);
+
+      for (let ci = 0; ci < 48; ci++) {
+        const cMesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.24, 0.24, 0.06, 16),
+          new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.95, roughness: 0.1 })
+        );
+        cMesh.userData = { t: ci / 48, speed: 0.009 + Math.random() * 0.004 };
+        loanStreamGroup.add(cMesh);
+      }
+
+      // ── D. SLIDE 4: B2B DATA MARKETPLACE NODES ──
+      b2bGroup = new THREE.Group();
+      b2bGroup.visible = false;
+      worldGroup.add(b2bGroup);
+
+      const b2bPositions = [
+        [-2.0, 3.8, -4.0],
+        [2.5, 4.2, -4.5],
+        [7.0, 3.5, -3.8]
+      ];
+      b2bGroup.lasers = [];
+      b2bPositions.forEach((pos, idx) => {
+        const nodeBox = new THREE.Mesh(
+          new THREE.BoxGeometry(1.2, 1.2, 1.2),
+          new THREE.MeshStandardMaterial({ color: idx === 0 ? 0x06b6d4 : (idx === 1 ? 0xa855f7 : 0x10b981), roughness: 0.3, metalness: 0.7 })
+        );
+        nodeBox.position.set(pos[0], pos[1], pos[2]);
+        b2bGroup.add(nodeBox);
+
+        const radar = new THREE.Mesh(
+          new THREE.TorusGeometry(1.2, 0.04, 12, 36),
+          new THREE.MeshBasicMaterial({ color: idx === 0 ? 0x38bdf8 : (idx === 1 ? 0xc084fc : 0x34d399) })
+        );
+        radar.rotation.x = Math.PI / 2;
+        radar.position.set(pos[0], pos[1] - 0.5, pos[2]);
+        b2bGroup.add(radar);
+
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(pos[0], pos[1], pos[2]),
+          new THREE.Vector3(0.5, 1.4, 0.5)
+        ]);
+        const laser = new THREE.Line(lineGeo, new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.6 }));
+        b2bGroup.add(laser);
+        b2bGroup.lasers.push({ laser, origin: new THREE.Vector3(pos[0], pos[1], pos[2]) });
+      });
+
+      // ── E. SLIDE 5: 3D MACRO ECONOMIC GROWTH PILLARS ──
+      macroGroup = new THREE.Group();
+      macroGroup.visible = false;
+      worldGroup.add(macroGroup);
+
+      const pillarData = [
+        { x: -3.0, z: -1.5, targetHeight: 3.5, color: 0x10b981 },
+        { x: 1.0, z: -2.0, targetHeight: 4.8, color: 0x06b6d4 },
+        { x: 5.0, z: -1.5, targetHeight: 6.0, color: 0xf59e0b }
+      ];
+      macroGroup.pillarMeshes = [];
+      pillarData.forEach(p => {
+        const pillarMesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.65, 0.75, 1, 24),
+          new THREE.MeshStandardMaterial({ color: p.color, roughness: 0.3, metalness: 0.6 })
+        );
+        pillarMesh.userData = { targetHeight: p.targetHeight, currentScale: 0.1, x: p.x, z: p.z };
+        pillarMesh.position.set(p.x, 0.5, p.z);
+        macroGroup.add(pillarMesh);
+        macroGroup.pillarMeshes.push(pillarMesh);
+
+        const capRing = new THREE.Mesh(
+          new THREE.TorusGeometry(0.7, 0.06, 12, 32),
+          new THREE.MeshBasicMaterial({ color: p.color })
+        );
+        capRing.rotation.x = Math.PI / 2;
+        pillarMesh.add(capRing);
+      });
+
+      // ── F. SLIDE 6: DECOUPLED LIABILITY SECURITY SHIELD ──
+      shieldGroup = new THREE.Group();
+      shieldGroup.position.set(1.5, 0, 1.0);
+      shieldGroup.visible = false;
+      worldGroup.add(shieldGroup);
+
+      const shieldDome = new THREE.Mesh(
+        new THREE.SphereGeometry(10.5, 24, 18, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.MeshBasicMaterial({ color: 0x8b5cf6, wireframe: true, transparent: true, opacity: 0.35 })
+      );
+      shieldGroup.add(shieldDome);
+
+      const cryptoRing = new THREE.Mesh(
+        new THREE.TorusGeometry(8.5, 0.08, 16, 48),
+        new THREE.MeshBasicMaterial({ color: 0xc4b5fd, transparent: true, opacity: 0.6 })
+      );
+      cryptoRing.rotation.x = Math.PI / 2;
+      cryptoRing.position.y = 2.5;
+      shieldGroup.add(cryptoRing);
+
+      // ── G. SLIDE 7: QUANTUM PORTAL VORTEX (FINALE) ──
+      portalGroup = new THREE.Group();
+      portalGroup.position.set(1.5, 3.2, 0.5);
+      portalGroup.visible = false;
+      worldGroup.add(portalGroup);
+
+      for (let r = 0; r < 6; r++) {
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(1.5 + r * 0.55, 0.05, 16, 48),
+          new THREE.MeshBasicMaterial({ color: r % 2 === 0 ? 0x10b981 : 0x06b6d4, transparent: true, opacity: 0.85 - r * 0.11 })
+        );
+        portalGroup.add(ring);
+      }
+
+      // Drag / Orbit Listeners
+      canvas.addEventListener('mousedown', (e) => {
+        isUserDragging = true;
+        lastMouse = { x: e.clientX, y: e.clientY };
+      });
+      window.addEventListener('mouseup', () => { isUserDragging = false; });
+      window.addEventListener('mousemove', (e) => {
+        if (isUserDragging) {
+          const dx = e.clientX - lastMouse.x;
+          const dy = e.clientY - lastMouse.y;
+          worldRotationY += dx * 0.007;
+          worldRotationX = Math.max(-0.1, Math.min(0.5, worldRotationX + dy * 0.005));
+          lastMouse = { x: e.clientX, y: e.clientY };
+        }
+      });
+
+      canvas.addEventListener('touchstart', (e) => {
+        isUserDragging = true;
+        lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }, { passive: true });
+      window.addEventListener('touchend', () => { isUserDragging = false; });
+      canvas.addEventListener('touchmove', (e) => {
+        if (isUserDragging) {
+          const dx = e.touches[0].clientX - lastMouse.x;
+          const dy = e.touches[0].clientY - lastMouse.y;
+          worldRotationY += dx * 0.007;
+          worldRotationX = Math.max(-0.1, Math.min(0.5, worldRotationX + dy * 0.005));
+          lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+      }, { passive: true });
+
+      window.addEventListener('resize', updateCameraProjection);
+
+      const curveSpline = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(8.5, 2.5, 1.0),
+        new THREE.Vector3(1.5, 4.8, 0.5),
+        new THREE.Vector3(-6.5, 1.8, 1.5)
+      ]);
+      const protocolSpline = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-6.5, 1.8, 1.5),
+        new THREE.Vector3(0.5, 2.5, 0.5),
+        new THREE.Vector3(8.5, 2.5, 1.0)
+      ]);
+
+      function renderLoop() {
+        requestAnimationFrame(renderLoop);
+
+        if (simDriving && truckMesh) {
+          simDriveT += 0.0035;
+          if (simDriveT > 1) simDriveT = 0;
+          const currentX = -5.0 + Math.sin(simDriveT * Math.PI) * 11.5;
+          truckMesh.position.x = currentX;
+          truckWheels.forEach(w => { w.rotation.y += 0.15; });
+          
+          if (b2bGroup && b2bGroup.lasers) {
+            b2bGroup.lasers.forEach(item => {
+              const posAttr = item.laser.geometry.attributes.position;
+              posAttr.setXYZ(1, truckMesh.position.x, truckMesh.position.y + 1.2, truckMesh.position.z);
+              posAttr.needsUpdate = true;
+            });
+          }
+        }
+
+        if (reeferFan) reeferFan.rotation.x += (simHazard ? 0.02 : 0.28);
+
+        if (roadDashes && roadDashes.length > 0) {
+          const dashSpeed = (simDriving ? 0.09 : 0.016);
+          roadDashes.forEach(dash => {
+            dash.position.x -= dashSpeed;
+            if (dash.position.x < -6.5) dash.position.x += 16.2;
+          });
+        }
+        if (mountainMist) {
+          mountainMist.rotation.y += 0.0006;
+        }
+
+        if (heatSmokeGroup && heatSmokeGroup.visible) {
+          heatSmokeGroup.children.forEach(sm => {
+            sm.position.y += sm.userData.vy;
+            sm.position.x += sm.userData.vx;
+            sm.scale.multiplyScalar(1.02);
+            if (sm.position.y > 2.5) {
+              sm.position.y = 0;
+              sm.position.x = (Math.random() - 0.5) * 0.3;
+              sm.scale.setScalar(sm.userData.baseScale);
+            }
+          });
+        }
+
+        if (protocolSpline && energyPulses.length > 0) {
+          energyPulses.forEach(pMesh => {
+            pMesh.userData.t = (pMesh.userData.t + pMesh.userData.speed) % 1;
+            const pt = protocolSpline.getPoint(pMesh.userData.t);
+            pMesh.position.copy(pt);
+          });
+        }
+
+        if (hazardGroup.visible) {
+          if (hazardGroup.children[1]) hazardGroup.children[1].rotation.z += 0.04;
+          if (hazardGroup.children[2]) hazardGroup.children[2].rotation.z -= 0.03;
+          if (hazardGroup.children[3]) hazardGroup.children[3].intensity = 2.8 + Math.sin(Date.now() * 0.012) * 2.2;
+        }
+
+        if (passportGroup.visible) {
+          passportGroup.children[0].rotation.z += 0.015;
+          passportGroup.children[1].rotation.y += 0.02;
+          passportGroup.position.y = 3.4 + Math.sin(Date.now() * 0.003) * 0.22;
+          if (passportGroup.stars) {
+            passportGroup.stars.forEach(st => {
+              st.userData.theta += 0.03;
+              st.position.set(Math.cos(st.userData.theta) * st.userData.radius, Math.sin(st.userData.theta) * st.userData.radius, 0.1);
+              st.rotation.x += 0.04;
+              st.rotation.y += 0.06;
+            });
+          }
+        }
+
+        if (loanStreamGroup.visible) {
+          loanStreamGroup.children.forEach(child => {
+            if (child.geometry instanceof THREE.CylinderGeometry) {
+              child.userData.t = (child.userData.t + child.userData.speed) % 1;
+              const pt = curveSpline.getPoint(child.userData.t);
+              child.position.copy(pt);
+              child.rotation.x += 0.06;
+              child.rotation.y += 0.08;
+            }
+          });
+        }
+
+        if (b2bGroup.visible) {
+          b2bGroup.children.forEach((child, i) => {
+            if (child.geometry instanceof THREE.TorusGeometry) {
+              child.scale.setScalar(1 + Math.sin(Date.now() * 0.006 + i) * 0.2);
+            }
+          });
+          if (b2bGroup.lasers) {
+            b2bGroup.lasers.forEach((lItem, i) => {
+              lItem.laser.material.opacity = 0.4 + Math.sin(Date.now() * 0.008 + i) * 0.3;
+            });
+          }
+        }
+
+        if (macroGroup.visible && macroGroup.pillarMeshes) {
+          macroGroup.pillarMeshes.forEach(pm => {
+            if (pm.userData.currentScale < pm.userData.targetHeight) {
+              pm.userData.currentScale += (pm.userData.targetHeight - pm.userData.currentScale) * 0.06;
+              pm.scale.set(1, pm.userData.currentScale, 1);
+              pm.position.set(pm.userData.x, pm.userData.currentScale / 2, pm.userData.z);
+            }
+          });
+        }
+
+        if (shieldGroup.visible) {
+          shieldGroup.rotation.y += 0.0025;
+          if (shieldGroup.children[1]) shieldGroup.children[1].rotation.z += 0.008;
+        }
+
+        if (portalGroup.visible) {
+          portalGroup.children.forEach((rg, idx) => {
+            rg.rotation.z += (idx % 2 === 0 ? 0.025 : -0.03) * (idx + 1);
+          });
+          if (starStreaks) {
+            starStreaks.material.opacity = 0.65;
+            starStreaks.rotation.z += 0.01;
+          }
+        } else {
+          if (starStreaks) starStreaks.material.opacity = 0;
+        }
+
+        if (protocolBeam) {
+          protocolBeam.material.opacity = 0.55 + Math.sin(Date.now() * 0.005) * 0.25;
+        }
+
+        if (backgroundParticles) {
+          backgroundParticles.rotation.y += 0.0004;
+        }
+
+        currentFogColor.lerp(targetFogColor, 0.05);
+        scene.fog.color.copy(currentFogColor);
+
+        camera.position.x += (currentCamTarget.x - camera.position.x) * 0.045;
+        camera.position.y += (currentCamTarget.y - camera.position.y) * 0.045;
+        camera.position.z += (currentCamTarget.z - camera.position.z) * 0.045;
+        camera.lookAt(currentCamTarget.lookX, currentCamTarget.lookY, currentCamTarget.lookZ);
+
+        if (!isUserDragging) {
+          worldRotationY += 0.0008;
+        }
+        scene.rotation.y = worldRotationY;
+        scene.rotation.x = worldRotationX;
+
+        renderer.render(scene, camera);
+
+        updateWorldBeacons();
+      }
+      renderLoop();
+    }
+
+    function projectAnchor(vec3) {
+      if (!camera) return { x: -999, y: -999, visible: false };
+      const rotated = vec3.clone().multiplyScalar(0.68);
+      rotated.applyAxisAngle(new THREE.Vector3(0, 1, 0), worldRotationY);
+      rotated.applyAxisAngle(new THREE.Vector3(1, 0, 0), worldRotationX);
+
+      const p = rotated.clone().project(camera);
+      if (p.z > 1) return { x: -999, y: -999, visible: false };
+      const x = (p.x * 0.5 + 0.5) * window.innerWidth;
+      const y = (-(p.y * 0.5) + 0.5) * window.innerHeight;
+      return { x, y, visible: true };
+    }
+
+    function updateWorldBeacons() {
+      const beaconMap = [
+        { id: 'lbl-farm', vec: anchors.farm, slideMin: 0, slideMax: 0 },
+        { id: 'lbl-transit', vec: anchors.transit, slideMin: 0, slideMax: 0 },
+        { id: 'lbl-bank', vec: anchors.bank, slideMin: 0, slideMax: 0 },
+        { id: 'lbl-hazard', vec: anchors.hazard, slideMin: 1, slideMax: 1 },
+        { id: 'lbl-denied', vec: anchors.denied, slideMin: 1, slideMax: 1 },
+        { id: 'lbl-passport', vec: anchors.passport, slideMin: 2, slideMax: 2 },
+        { id: 'lbl-loan', vec: anchors.loan, slideMin: 3, slideMax: 3 },
+        { id: 'lbl-b2b-super', vec: anchors.b2bSuper, slideMin: 4, slideMax: 4 },
+        { id: 'lbl-b2b-proc', vec: anchors.b2bProc, slideMin: 4, slideMax: 4 },
+        { id: 'lbl-macro-income', vec: anchors.macroIncome, slideMin: 5, slideMax: 5 },
+        { id: 'lbl-macro-repay', vec: anchors.macroRepay, slideMin: 5, slideMax: 5 },
+        { id: 'lbl-macro-saved', vec: anchors.macroSaved, slideMin: 5, slideMax: 5 },
+        { id: 'lbl-shield', vec: anchors.shield, slideMin: 6, slideMax: 6 },
+        { id: 'lbl-portal', vec: anchors.portal, slideMin: 7, slideMax: 7 }
+      ];
+
+      beaconMap.forEach(item => {
+        const el = document.getElementById(item.id);
+        if (!el) return;
+        const inActiveSlide = (activeIdx >= item.slideMin && activeIdx <= item.slideMax);
+        if (!inActiveSlide) {
+          el.classList.remove('visible');
+          return;
+        }
+
+        const screenPos = projectAnchor(item.vec);
+        if (screenPos.visible) {
+          el.style.left = `${screenPos.x}px`;
+          el.style.top = `${screenPos.y}px`;
+          el.classList.add('visible');
+        } else {
+          el.classList.remove('visible');
+        }
+      });
+    }
+
+    function animateCounters(cardEl) {
+      if (!cardEl) return;
+      const counterEls = cardEl.querySelectorAll('[data-target]');
+      counterEls.forEach(el => {
+        const target = parseFloat(el.getAttribute('data-target') || '0');
+        const prefix = el.getAttribute('data-prefix') || '';
+        const unit = el.getAttribute('data-unit') || '';
+        const isFloat = target % 1 !== 0;
+        
+        let start = 0;
+        const duration = 1200;
+        const startTime = performance.now();
+
+        function updateCount(currentTime) {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const ease = 1 - Math.pow(1 - progress, 3);
+          const currentVal = isFloat ? (target * ease).toFixed(1) : Math.floor(target * ease);
+
+          el.textContent = `${prefix}${currentVal}${unit}`;
+          if (progress < 1) requestAnimationFrame(updateCount);
+        }
+        requestAnimationFrame(updateCount);
+      });
+    }
+
+    function setSlide3DState(idx) {
+      hazardGroup.visible = (idx === 1);
+      passportGroup.visible = (idx === 2);
+      loanStreamGroup.visible = (idx === 3);
+      b2bGroup.visible = (idx === 4);
+      macroGroup.visible = (idx === 5);
+      shieldGroup.visible = (idx === 6);
+      portalGroup.visible = (idx === 7);
+
+      if (idx === 5 && macroGroup.pillarMeshes) {
+        macroGroup.pillarMeshes.forEach(pm => {
+          pm.userData.currentScale = 0.1;
+          pm.scale.set(1, 0.1, 1);
+        });
+      }
+
+      const cfg = slideConfigs[idx] || slideConfigs[0];
+      currentCamTarget = cfg.cam;
+      worldRotationY = (cfg.cam && cfg.cam.rotY !== undefined) ? cfg.cam.rotY : 0.28;
+
+      targetFogColor = new THREE.Color(cfg.fogColor);
+      document.getElementById('ambient-backdrop').style.background = 
+        `radial-gradient(circle at 75% 45%, ${cfg.accentGlow} 0%, transparent 65%)`;
+
+      const statusPill = document.getElementById('scene-status-pill');
+      const statusText = document.getElementById('scene-status-text');
+      if (statusPill && statusText) {
+        statusText.textContent = cfg.title;
+        statusPill.style.color = `#${cfg.color.toString(16).padStart(6, '0')}`;
+      }
+    }
+
+    const cards = Array.from(document.querySelectorAll('.pitch-card'));
+    const totalCount = cards.length;
+    let activeIdx = 0;
+    let navigating = false;
+
+    const dotsStrip = document.getElementById('dots-strip');
+    cards.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === 0 ? ' active' : '');
+      d.addEventListener('click', () => {
+        initAudio();
+        jumpToSlide(i);
+      });
+      dotsStrip.appendChild(d);
+    });
+
+    function updateSlideDisplay() {
+      document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === activeIdx));
+      document.getElementById('arr-prev').disabled = activeIdx === 0;
+      document.getElementById('arr-next').disabled = activeIdx === totalCount - 1;
+      
+      setSlide3DState(activeIdx);
+      animateCounters(cards[activeIdx]);
+    }
+
+    function jumpToSlide(target) {
+      if (target === activeIdx || navigating || target < 0 || target >= totalCount) return;
+      navigating = true;
+      initAudio();
+      playWhoosh();
+
+      const outCard = cards[activeIdx];
+      const inCard = cards[target];
+
+      outCard.classList.remove('card-in');
+      outCard.classList.add('card-out');
+
+      setTimeout(() => {
+        outCard.classList.remove('active', 'card-out');
+        outCard.style.display = 'none';
+
+        inCard.style.display = 'flex';
+        inCard.classList.add('active', 'card-in');
+
+        activeIdx = target;
+        updateSlideDisplay();
+
+        setTimeout(() => {
+          inCard.classList.remove('card-in');
+          navigating = false;
+        }, 500);
+      }, 320);
+    }
+
+    function next() { jumpToSlide(activeIdx + 1); }
+    function prev() { jumpToSlide(activeIdx - 1); }
+
+    document.getElementById('arr-next').addEventListener('click', next);
+    document.getElementById('arr-prev').addEventListener('click', prev);
+
+    window.addEventListener('keydown', (e) => {
+      initAudio();
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        next();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prev();
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFs();
+      } else if (e.key.toLowerCase() === 'm') {
+        toggleSound();
+      }
+    });
+
+    for (let k = 0; k <= 6; k++) {
+      document.getElementById(`btn-next-${k}`)?.addEventListener('click', next);
+    }
+
+    // 1. DRIVE ROUTE TOGGLE
+    const btnSimDrive = document.getElementById('btn-sim-drive');
+    btnSimDrive?.addEventListener('click', () => {
+      initAudio();
+      simDriving = !simDriving;
+      btnSimDrive.classList.toggle('active', simDriving);
+      if (simDriving) {
+        playChime();
+        currentCamTarget = { x: 2.5, y: 5.5, z: 11.0, lookX: 1.0, lookY: 1.2, lookZ: 0.5, rotY: 0.3 };
+      } else {
+        playBrakes();
+      }
+    });
+
+    // 2. X-RAY CARGO INSPECTION VIEW
+    const btnSimXray = document.getElementById('btn-sim-xray');
+    btnSimXray?.addEventListener('click', () => {
+      initAudio();
+      playChime();
+      simXray = !simXray;
+      btnSimXray.classList.toggle('active', simXray);
+      
+      if (reeferBoxMaterial) {
+        reeferBoxMaterial.opacity = simXray ? 0.22 : 0.96;
+        reeferBoxMaterial.color.setHex(simXray ? 0x06b6d4 : 0xf8fafc);
+      }
+      
+      if (simXray) {
+        currentCamTarget = { x: 1.0, y: 2.8, z: 6.2, lookX: 0.5, lookY: 1.2, lookZ: 0.5, rotY: 0.35 };
+      } else {
+        currentCamTarget = slideConfigs[activeIdx].cam;
+      }
+    });
+
+    // 3. SPOILAGE SPIKE / BREAKDOWN SIMULATION
+    const btnSimHazard = document.getElementById('btn-sim-hazard');
+    btnSimHazard?.addEventListener('click', () => {
+      initAudio();
+      simHazard = !simHazard;
+      btnSimHazard.classList.toggle('active', simHazard);
+      
+      if (simHazard) {
+        playBrakes();
+        simDriving = false;
+        btnSimDrive.classList.remove('active');
+        if (heatSmokeGroup) heatSmokeGroup.visible = true;
+        if (hazardGroup) hazardGroup.visible = true;
+        currentCamTarget = { x: 1.2, y: 3.2, z: 7.0, lookX: 1.0, lookY: 1.1, lookZ: 0.5, rotY: 0.4 };
+        cargoCrates.forEach((c, idx) => {
+          if (idx % 2 === 1) c.material.color.setHex(0xf43f5e);
+        });
+      } else {
+        playChime();
+        if (heatSmokeGroup) heatSmokeGroup.visible = false;
+        if (hazardGroup && activeIdx !== 1) hazardGroup.visible = false;
+        cargoCrates.forEach((c, idx) => {
+          if (idx % 2 === 1) c.material.color.setHex(0x34d399);
+        });
+      }
+    });
+
+    // 4. 1-CLICK DISBURSE COIN FOUNTAIN
+    const btnSimDisburse = document.getElementById('btn-sim-disburse');
+    btnSimDisburse?.addEventListener('click', () => {
+      initAudio();
+      playCoins();
+      loanStreamGroup.visible = true;
+      currentCamTarget = { x: 3.5, y: 5.0, z: 10.5, lookX: 1.5, lookY: 1.8, lookZ: 0.5, rotY: 0.25 };
+      
+      const bar = document.getElementById('fund-bar');
+      const status = document.getElementById('fund-status');
+      if (bar) bar.style.width = '100%';
+      if (status) status.textContent = 'Rs. 5,00,000 Fully Funded (100%) by ADBL!';
+
+      for (let i = 0; i < 12; i++) {
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.className = 'burst-emoji';
+          el.textContent = '💰';
+          el.style.left = `${window.innerWidth * 0.65 + (Math.random() - 0.5) * 180}px`;
+          document.getElementById('emoji-burst-container').appendChild(el);
+          setTimeout(() => el.remove(), 2500);
+        }, i * 100);
+      }
+    });
+
+    document.getElementById('lens-fly-0')?.addEventListener('click', () => {
+      initAudio();
+      playChime();
+      currentCamTarget = { x: 0, y: 10.5, z: 15.5, lookX: 0, lookY: 1.0, lookZ: 0, rotY: 0.35 };
+      if (protocolBeam) {
+        protocolBeam.material.opacity = 1.0;
+        setTimeout(() => { if (protocolBeam) protocolBeam.material.opacity = 0.65; }, 800);
+      }
+    });
+
+    document.getElementById('lens-hazard-1')?.addEventListener('click', () => {
+      initAudio();
+      currentCamTarget = { x: 1.0, y: 3.2, z: 6.8, lookX: 1.0, lookY: 1.0, lookZ: 0.5, rotY: 0.45 };
+      if (hazardGroup && hazardGroup.children[3]) {
+        hazardGroup.children[3].intensity = 10.0;
+        setTimeout(() => { if (hazardGroup && hazardGroup.children[3]) hazardGroup.children[3].intensity = 3.5; }, 900);
+      }
+    });
+
+    document.getElementById('lens-passport-2')?.addEventListener('click', () => {
+      initAudio();
+      playChime();
+      currentCamTarget = { x: -4.0, y: 3.6, z: 7.2, lookX: -4.0, lookY: 2.2, lookZ: 1.0, rotY: 0.12 };
+      if (passportGroup) {
+        passportGroup.rotation.y += 2.2;
+      }
+    });
+
+    document.getElementById('lens-coins-3')?.addEventListener('click', () => {
+      initAudio();
+      playCoins();
+      currentCamTarget = { x: 3.5, y: 5.0, z: 10.0, lookX: 1.5, lookY: 1.8, lookZ: 0.5, rotY: 0.28 };
+    });
+
+    document.getElementById('lens-b2b-4')?.addEventListener('click', () => {
+      initAudio();
+      playChime();
+      currentCamTarget = { x: 0.5, y: 7.5, z: 10.0, lookX: 1.0, lookY: 2.0, lookZ: -2.0, rotY: 0.35 };
+      if (b2bGroup) {
+        b2bGroup.children.forEach(c => {
+          if (c.geometry instanceof THREE.TorusGeometry) c.scale.setScalar(1.6);
+        });
+        setTimeout(() => {
+          if (b2bGroup) {
+            b2bGroup.children.forEach(c => {
+              if (c.geometry instanceof THREE.TorusGeometry) c.scale.setScalar(1.0);
+            });
+          }
+        }, 700);
+      }
+    });
+
+    document.getElementById('lens-macro-5')?.addEventListener('click', () => {
+      initAudio();
+      playChime();
+      currentCamTarget = { x: 0, y: 10.0, z: 14.0, lookX: 0, lookY: 1.6, lookZ: 0, rotY: 0.05 };
+      if (macroGroup.pillarMeshes) {
+        macroGroup.pillarMeshes.forEach(pm => {
+          pm.userData.currentScale = 0.1;
+          pm.scale.set(1, 0.1, 1);
+        });
+      }
+    });
+
+    document.getElementById('lens-shield-6')?.addEventListener('click', () => {
+      initAudio();
+      currentCamTarget = { x: 1.8, y: 4.5, z: 9.5, lookX: 0.8, lookY: 1.5, lookZ: 0, rotY: 0.3 };
+      if (shieldGroup && shieldGroup.children[1]) {
+        shieldGroup.children[1].scale.setScalar(1.3);
+        setTimeout(() => { if (shieldGroup && shieldGroup.children[1]) shieldGroup.children[1].scale.setScalar(1.0); }, 650);
+      }
+    });
+
+    document.getElementById('lens-portal-7')?.addEventListener('click', () => {
+      initAudio();
+      playWarp();
+      currentCamTarget = { x: 0.5, y: 2.8, z: 8.5, lookX: 0.5, lookY: 2.0, lookZ: 0.5, rotY: 0.0 };
+      if (portalGroup) {
+        portalGroup.children.forEach(rg => { rg.rotation.z += 1.8; });
+      }
+    });
+
+    document.getElementById('btn-approve-loan-demo')?.addEventListener('click', () => {
+      initAudio();
+      playCoins();
+      loanStreamGroup.visible = true;
+      currentCamTarget = { x: 3.5, y: 5.0, z: 10.5, lookX: 1.5, lookY: 1.8, lookZ: 0.5, rotY: 0.25 };
+      
+      const bar = document.getElementById('fund-bar');
+      const status = document.getElementById('fund-status');
+      if (bar) bar.style.width = '100%';
+      if (status) status.textContent = 'Rs. 5,00,000 Fully Funded (100%) by ADBL!';
+
+      for (let i = 0; i < 10; i++) {
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.className = 'burst-emoji';
+          el.textContent = '💰';
+          el.style.left = `${window.innerWidth * 0.65 + (Math.random() - 0.5) * 180}px`;
+          document.getElementById('emoji-burst-container').appendChild(el);
+          setTimeout(() => el.remove(), 2500);
+        }, i * 110);
+      }
+    });
+
+    document.querySelectorAll('.reaction-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        initAudio();
+        playChime();
+        const icon = btn.getAttribute('data-icon');
+        const numEl = btn.querySelector('.cnt-num');
+        if (numEl) numEl.textContent = parseInt(numEl.textContent || '0', 10) + 1;
+
+        for (let k = 0; k < 3; k++) {
+          setTimeout(() => {
+            const el = document.createElement('div');
+            el.className = 'burst-emoji';
+            el.textContent = icon;
+            el.style.left = `${60 + (Math.random() - 0.5) * 120}px`;
+            document.getElementById('emoji-burst-container').appendChild(el);
+            setTimeout(() => el.remove(), 2400);
+          }, k * 140);
+        }
+      });
+    });
+
+    document.getElementById('btn-launch-operational')?.addEventListener('click', () => {
+      initAudio();
+      playWarp();
+      if (portalGroup) {
+        portalGroup.children.forEach(rg => { rg.rotation.z += 3.0; });
+      }
+      setTimeout(() => {
+        window.open('/sponsor', '_blank');
+      }, 700);
+    });
+
+    document.getElementById('btn-top-app')?.addEventListener('click', () => {
+      initAudio();
+      playCoins();
+      window.open('/sponsor', '_blank');
+    });
+
+    function toggleFs() {
+      initAudio();
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen().catch(() => {});
+    }
+    document.getElementById('btn-fs')?.addEventListener('click', toggleFs);
+
+    function toggleSound() {
+      initAudio();
+      soundOn = !soundOn;
+      document.getElementById('sound-icon').textContent = soundOn ? '🔊' : '🔇';
+      document.getElementById('btn-sound').classList.toggle('active', soundOn);
+    }
+    document.getElementById('btn-sound')?.addEventListener('click', toggleSound);
+
+    let s = 0, tOn = true;
+    const tBox = document.getElementById('timer-box');
+    setInterval(() => {
+      if (!tOn) return;
+      s++;
+      tBox.textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    }, 1000);
+    tBox.addEventListener('click', () => { tOn = !tOn; tBox.style.opacity = tOn ? '1' : '0.5'; });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      init3DStage();
+      updateSlideDisplay();
+      document.body.addEventListener('click', initAudio, { once: true });
+    });
+  </script>
+</body>
+</html>

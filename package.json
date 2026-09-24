@@ -1,0 +1,71 @@
+{
+  "name": "krishipath-ai",
+  "version": "3.1.0",
+  "description": "Agricultural Intelligence Platform - AI-Powered Field Monitoring & Analytics",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.18.1",
+    "chart.js": "^4.4.7",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.27.0",
+    "react": "^19.2.7",
+    "react-chartjs-2": "^5.3.0",
+    "react-dom": "^19.2.7",
+    "react-error-boundary": "^5.0.0",
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^7.18.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "autoprefixer": "^10.5.4",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "globals": "^15.13.0",
+    "postcss": "^8.5.24",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^3.4.19",
+    "vite": "^8.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "keywords": [
+    "agriculture",
+    "ai",
+    "farming",
+    "sensors",
+    "iot",
+    "field-monitoring",
+    "crop-analysis",
+    "krishipath"
+  ],
+  "author": "KrishiPath AI Team",
+  "license": "MIT"
+}
